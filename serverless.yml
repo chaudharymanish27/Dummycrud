@@ -1,0 +1,85 @@
+service: dummycrud
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  # you can overwrite defaults here
+  stage: dummycrud
+  region: ap-south-1
+  environment:
+    DYNAMODB_CUSTOMER_TABLE: ${self:service}-customerTable-${sls:stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action: '*'
+        # - dynamodb:Query
+        # - dynamodb:Scan
+        # - dynamodb:GetItem
+        # - dynamodb:PutItem
+        # - dynamodb:PatchItem
+        # - dynamodb:DeleteItem
+      Resource: "*"
+ 
+      
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          path: /test/{id}
+          method: get 
+          request: 
+          parameters: 
+             paths: 
+               id: true  
+  createUsers:
+    handler: createUsers.create
+    events:
+      - httpApi:
+          path: /users
+          method: post  
+  getUser:
+    handler: getUser.get
+    events:
+      - httpApi:
+          path: /user/{primary_key}
+          method: get
+          parameters:
+              paths:
+                primary_key: true
+  getUsers:
+    handler: getUsers.get
+    events:
+      - httpApi:
+          path: /users
+          method: get
+  updateUser:
+    handler: updateUser.update
+    events:
+      - httpApi:
+          path: /users
+          method: put
+  deleteUser:
+    handler: deleteUser.delete
+    events:
+      - httpApi:
+          path: /users
+          method: delete
+    
+	
+resources:
+  Resources:
+    CustomerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: primary_key
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: primary_key
+            KeyType: HASH
+        TableName: ${self:service}-customerTable-${sls:stage}
+
+
